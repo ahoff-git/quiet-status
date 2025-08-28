@@ -1,28 +1,59 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "@/app/page.module.css";
 import { useSelectedUser } from "@/state/SelectedUserContext";
 import type { UserOption } from "./UserSelector";
 
-const PRESET_DURATIONS: { label: string; minutes: number }[] = [
-  { label: "1h", minutes: 60 },
-  { label: "4h", minutes: 240 },
-  { label: "8h", minutes: 480 },
-  { label: "24h", minutes: 1440 },
-  { label: "3d", minutes: 4320 },
-  { label: "7d", minutes: 10080 },
-];
+function formatForDateTimeLocal(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hours = pad(d.getHours());
+  const minutes = pad(d.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function formatDiffDHMS(now: Date, future: Date): string {
+  const ms = Math.max(0, future.getTime() - now.getTime());
+  let totalMinutes = Math.round(ms / 60000);
+  let days = Math.floor(totalMinutes / (60 * 24));
+  totalMinutes -= days * 60 * 24;
+  let hours = Math.floor(totalMinutes / 60);
+  totalMinutes -= hours * 60;
+  let minutes = totalMinutes;
+  // Normalize rounding edge cases
+  if (minutes === 60) {
+    minutes = 0;
+    hours += 1;
+  }
+  if (hours === 24) {
+    hours = 0;
+    days += 1;
+  }
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0 || days > 0) parts.push(`${hours}h`);
+  parts.push(`${minutes}m`);
+  return parts.join(" ");
+}
 
 export default function PostBar({ users, onPosted }: { users: UserOption[]; onPosted?: () => void }) {
   const { selectedUserId } = useSelectedUser();
   const posterId = useMemo(() => (selectedUserId ? Number(selectedUserId) : undefined), [selectedUserId]);
 
   const [message, setMessage] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState<number>(1440); // default 24h
+  // default estimated end time is now + 24h
+  const [expiresAtLocal, setExpiresAtLocal] = useState<string>(() => {
+    const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    return formatForDateTimeLocal(d);
+  });
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [reachAll, setReachAll] = useState(true);
   const [reachSelected, setReachSelected] = useState<number[]>([]);
+  const [nowTick, setNowTick] = useState<number>(Date.now());
+  const dateInputRef = useRef<HTMLInputElement | null>(null);
 
   // Ensure the poster is always included when selecting specific users
   useEffect(() => {
@@ -46,10 +77,17 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
 
   async function submit() {
     if (!canPost) return;
+    let expiresAtIso: string | undefined;
+    if (expiresAtLocal) {
+      const parsed = new Date(expiresAtLocal);
+      if (!Number.isNaN(parsed.getTime())) {
+        expiresAtIso = parsed.toISOString();
+      }
+    }
     const body = {
       userId: posterId,
       message: message.trim(),
-      durationMinutes,
+      expiresAt: expiresAtIso,
       reachUserIds: reachAll ? null : reachSelected,
     };
     await fetch("/api/updates", {
@@ -60,6 +98,12 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
     setMessage("");
     if (onPosted) onPosted();
   }
+
+  // Update displayed diff periodically
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div className={styles.bottomBar}>
@@ -113,17 +157,54 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
             </div>
           )}
           <div className={styles.optionRow}>
-            <label className={styles.optionLabel}>Duration:</label>
-            <select
-              value={durationMinutes}
-              onChange={(e) => setDurationMinutes(Number(e.target.value))}
+            <label className={styles.optionLabel}>Est. end time:</label>
+            <button
+              type="button"
+              className={styles.postOptionsButton}
+              onClick={() => {
+                const el = dateInputRef.current;
+                if (!el) return;
+                try {
+                  // Prefer showPicker when available
+                  // @ts-expect-error: showPicker not in TS lib yet in all versions
+                  if (typeof el.showPicker === "function") {
+                    // @ts-expect-error
+                    el.showPicker();
+                  } else {
+                    el.focus();
+                    el.click();
+                  }
+                } catch {
+                  el.focus();
+                  el.click();
+                }
+              }}
             >
-              {PRESET_DURATIONS.map((d) => (
-                <option key={d.minutes} value={d.minutes}>
-                  {d.label}
-                </option>
-              ))}
-            </select>
+              {(() => {
+                const now = new Date(nowTick);
+                const sel = new Date(expiresAtLocal);
+                if (Number.isNaN(sel.getTime())) return "Set time";
+                return formatDiffDHMS(now, sel);
+              })()}
+            </button>
+            <button
+              type="button"
+              className={styles.postOptionsButton}
+              onClick={() => setExpiresAtLocal(formatForDateTimeLocal(new Date()))}
+              title="Set to today (now)"
+            >
+              Today
+            </button>
+            <input
+              ref={dateInputRef}
+              type="datetime-local"
+              value={expiresAtLocal}
+              min={formatForDateTimeLocal(new Date())}
+              onChange={(e) => setExpiresAtLocal(e.target.value)}
+              style={{ position: "absolute", right: 0, bottom: 0, width: 1, height: 1, opacity: 0, pointerEvents: "none" }}
+              aria-hidden
+              tabIndex={-1}
+            />
           </div>
         </div>
       )}

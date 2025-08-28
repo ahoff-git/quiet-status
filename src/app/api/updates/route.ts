@@ -10,10 +10,8 @@ export async function GET(request: NextRequest) {
   const viewerIdParam = searchParams.get("viewerId");
   const viewerId = viewerIdParam ? Number(viewerIdParam) : undefined;
 
-  // Keep existing 24h window and respect expiry + reach
+  // Keep existing 24h window and respect reach (do not hide by expiry)
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-  const nowCond = sql`${updates.expiresAt} IS NULL OR ${updates.expiresAt} > NOW()`;
   const reachCond = viewerId
     ? sql`${updates.reach} IS NULL OR ${viewerId} = ANY(${updates.reach})`
     : sql`${updates.reach} IS NULL`;
@@ -23,13 +21,14 @@ export async function GET(request: NextRequest) {
       id: updates.id,
       message: updates.message,
       createdAt: updates.createdAt,
+      expiresAt: updates.expiresAt,
       displayName: users.displayName,
       color: userSettings.color,
     })
     .from(updates)
     .innerJoin(users, eq(users.id, updates.userId))
     .leftJoin(userSettings, eq(users.id, userSettings.userId))
-    .where(and(gt(updates.createdAt, since), nowCond, reachCond))
+    .where(and(gt(updates.createdAt, since), reachCond))
     .orderBy(desc(updates.createdAt));
 
   // Dates will serialize as strings automatically
@@ -41,6 +40,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json();
   const userId = Number(body.userId);
   const message = (body.message ?? "").trim();
+  const expiresAtBody = body.expiresAt as string | undefined;
   const durationMinutes = body.durationMinutes as number | undefined;
   const reachUserIds = (body.reachUserIds ?? null) as number[] | null;
 
@@ -51,8 +51,18 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const mins = Number.isFinite(durationMinutes) ? Number(durationMinutes) : 24 * 60;
-  const expiresAt = new Date(Date.now() + mins * 60 * 1000);
+  // Prefer explicit expiresAt from client (ISO). Fallback to durationMinutes (legacy) or 24h.
+  let expiresAt: Date | null = null;
+  if (expiresAtBody) {
+    const d = new Date(expiresAtBody);
+    if (!Number.isNaN(d.getTime())) {
+      expiresAt = d;
+    }
+  }
+  if (!expiresAt) {
+    const mins = Number.isFinite(durationMinutes) ? Number(durationMinutes) : 24 * 60;
+    expiresAt = new Date(Date.now() + mins * 60 * 1000);
+  }
 
   const [inserted] = await db
     .insert(updates)

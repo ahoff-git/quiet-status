@@ -19,7 +19,7 @@ export const updates = pgTable('updates', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
   // List of user IDs allowed to view this update. Null means visible to everyone.
   reach: integer('reach').array(),
-  // When set, the update is considered invalid/expired after this timestamp
+  // Estimated end time for the update (display-only)
   expiresAt: timestamp('expires_at'),
 });
 

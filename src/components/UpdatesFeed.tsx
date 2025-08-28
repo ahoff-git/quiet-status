@@ -12,6 +12,7 @@ type UpdateRow = {
   id: number;
   message: string;
   createdAt: string;
+  expiresAt: string | null;
   displayName: string;
   color: string | null;
 };
@@ -68,7 +69,30 @@ export default function UpdatesFeed({ refreshToken = 0 }: { refreshToken?: numbe
                 </span>
               );
             })()}
-            <span className={styles.time}>{new Date(row.createdAt).toLocaleString()}</span>
+            {(() => {
+              const created = new Date(row.createdAt);
+              let est: string | null = null;
+              if (row.expiresAt) {
+                const expires = new Date(row.expiresAt);
+                const ms = expires.getTime() - created.getTime();
+                if (ms > 0) {
+                  const mins = Math.round(ms / 60000);
+                  if (mins < 60) {
+                    est = `~${mins}m`;
+                  } else if (mins < 60 * 24) {
+                    est = `~${Math.round(mins / 60)}h`;
+                  } else {
+                    est = `~${Math.round(mins / (60 * 24))}d`;
+                  }
+                }
+              }
+              return (
+                <span className={styles.time}>
+                  {created.toLocaleString()}
+                  {est ? ` • ${est}` : ""}
+                </span>
+              );
+            })()}
           </div>
           <p className={styles.message}>
             <HighlightedText text={row.message} terms={KEY_TERMS} />
