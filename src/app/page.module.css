@@ -57,6 +57,13 @@
   font-weight: bold;
 }
 
+.nameLowContrast {
+  display: inline-block;
+  border: 1px solid var(--foreground);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
 .time {
   font-size: 0.8em;
   color: gray;
