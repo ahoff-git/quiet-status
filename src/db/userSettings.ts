@@ -6,13 +6,33 @@ export async function getUserSettings(userId: number) {
   const db = await getDb();
   try {
     const [row] = await db
-      .select({ displayName: users.displayName, color: userSettings.color, passwordHash: users.passwordHash })
+      .select({
+        displayName: users.displayName,
+        color: userSettings.color,
+        fontSize: userSettings.fontSize,
+        passwordHash: users.passwordHash,
+      })
       .from(users)
       .leftJoin(userSettings, eq(users.id, userSettings.userId))
       .where(eq(users.id, userId));
     if (!row) return undefined;
-    const { displayName, color, passwordHash } = row as { displayName: string; color: string | null; passwordHash: string | null };
-    return { displayName, color, hasPassword: !!(passwordHash && passwordHash.length > 0) } as const;
+    const {
+      displayName,
+      color,
+      fontSize,
+      passwordHash,
+    } = row as {
+      displayName: string;
+      color: string | null;
+      fontSize: number | null;
+      passwordHash: string | null;
+    };
+    return {
+      displayName,
+      color,
+      fontSize: fontSize ?? 16,
+      hasPassword: !!(passwordHash && passwordHash.length > 0),
+    } as const;
   } catch (err: unknown) {
     // Gracefully handle environments where the password column hasn't been migrated yet
     type PgLikeError = { code?: unknown; cause?: { code?: unknown } };
@@ -20,13 +40,26 @@ export async function getUserSettings(userId: number) {
     const code = anyErr?.code ?? anyErr?.cause?.code;
     if (code === '42703') {
       const [row] = await db
-        .select({ displayName: users.displayName, color: userSettings.color })
+        .select({
+          displayName: users.displayName,
+          color: userSettings.color,
+          fontSize: userSettings.fontSize,
+        })
         .from(users)
         .leftJoin(userSettings, eq(users.id, userSettings.userId))
         .where(eq(users.id, userId));
       if (!row) return undefined;
-      const { displayName, color } = row as { displayName: string; color: string | null };
-      return { displayName, color, hasPassword: false } as const;
+      const { displayName, color, fontSize } = row as {
+        displayName: string;
+        color: string | null;
+        fontSize: number | null;
+      };
+      return {
+        displayName,
+        color,
+        fontSize: fontSize ?? 16,
+        hasPassword: false,
+      } as const;
     }
     throw err;
   }
@@ -35,7 +68,8 @@ export async function getUserSettings(userId: number) {
 export async function updateUserSettings(
   userId: number,
   displayName: string,
-  color: string
+  color: string,
+  fontSize: number
 ) {
   const db = await getDb();
   await db.transaction(async (tx) => {
@@ -47,10 +81,10 @@ export async function updateUserSettings(
     if (existing.length > 0) {
       await tx
         .update(userSettings)
-        .set({ color })
+        .set({ color, fontSize })
         .where(eq(userSettings.userId, userId));
     } else {
-      await tx.insert(userSettings).values({ userId, color });
+      await tx.insert(userSettings).values({ userId, color, fontSize });
     }
   });
 }

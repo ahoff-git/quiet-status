@@ -5,6 +5,7 @@ import Modal from "./Modal";
 import styles from "./SettingsModal.module.css";
 import { useSelectedUser } from "@/state/SelectedUserContext";
 import { randomHexColor } from "@/utils/color";
+import { useFontSize } from "@/state/FontSizeContext";
 
 interface Props {
   userId: string;
@@ -15,6 +16,8 @@ interface Props {
 export default function SettingsModal({ userId, isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
   const [color, setColor] = useState("#000000");
+  const { fontSize: currentFontSize, setFontSize: setContextFontSize } = useFontSize();
+  const [fontSize, setFontSize] = useState<number>(currentFontSize);
   const { setSelectedUserId, selectedUserId } = useSelectedUser();
   const [hasPassword, setHasPassword] = useState<boolean>(false);
   const [newPassword, setNewPassword] = useState<string>("");
@@ -26,17 +29,23 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
       .then((data) => {
         if (data?.displayName) setDisplayName(data.displayName);
         if (data?.color) setColor(data.color);
+        if (typeof data?.fontSize === "number") setFontSize(data.fontSize);
         if (typeof data?.hasPassword === "boolean") setHasPassword(Boolean(data.hasPassword));
       });
   }, [isOpen, userId]);
+
+  useEffect(() => {
+    setFontSize(currentFontSize);
+  }, [currentFontSize]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await fetch(`/api/users/${userId}/settings`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName, color }),
+      body: JSON.stringify({ displayName, color, fontSize }),
     });
+    setContextFontSize(fontSize);
     onClose();
     window.location.reload();
   };
@@ -118,6 +127,17 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
               Randomize
             </button>
           </div>
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor="fontSize">Font Size</label>
+          <input
+            id="fontSize"
+            type="number"
+            min={12}
+            max={32}
+            value={fontSize}
+            onChange={(e) => setFontSize(Number(e.target.value))}
+          />
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="password">Password</label>

@@ -12,6 +12,7 @@ export const userSettings = pgTable('user_settings', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id).notNull(),
   color: text('color').notNull(),
+  fontSize: integer('font_size').notNull().default(16),
 });
 
 export const updates = pgTable('updates', {
