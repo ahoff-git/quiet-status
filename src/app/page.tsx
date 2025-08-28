@@ -2,6 +2,8 @@ import { getDb } from "../db";
 import { updates, users, userSettings } from "../db/schema";
 import { desc, eq, gt } from "drizzle-orm";
 import UserSelector, { type UserOption } from "../components/UserSelector";
+import HighlightedText from "../components/HighlightedText";
+import { KEY_TERMS } from "../keyTerms";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +52,9 @@ export default async function Dashboard() {
                 {row.createdAt.toLocaleString()}
               </span>
             </div>
-            <p className={styles.message}>{row.message}</p>
+            <p className={styles.message}>
+              <HighlightedText text={row.message} terms={KEY_TERMS} />
+            </p>
           </li>
         ))}
       </ul>
