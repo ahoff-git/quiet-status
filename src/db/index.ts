@@ -1,19 +1,19 @@
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
 
-let db:
-  | ReturnType<typeof drizzle>
-  | undefined;
+let db: ReturnType<typeof drizzle> | undefined;
 
-export function getDb() {
+export async function getDb() {
   if (!db) {
     const url = process.env.POSTGRES_URL;
     if (!url) {
       throw new Error('POSTGRES_URL is not set');
     }
 
-    const client = postgres(url);
+    const client = postgres(url, { max: 1 });
     db = drizzle(client);
+    await migrate(db, { migrationsFolder: './drizzle' });
   }
 
   return db;
