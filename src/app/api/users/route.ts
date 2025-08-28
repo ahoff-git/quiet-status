@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createUser } from "@/db/users";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const { displayName, color } = await request.json();
   if (!displayName || !color) {
     return NextResponse.json(
@@ -13,4 +13,3 @@ export async function POST(request: Request) {
   const { id } = await createUser(displayName, color);
   return NextResponse.json({ id });
 }
-

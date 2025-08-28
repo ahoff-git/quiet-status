@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { updates, users, userSettings } from "@/db/schema";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const db = await getDb();
 
   const { searchParams } = new URL(request.url);
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
   return NextResponse.json(rows);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const db = await getDb();
   const body = await request.json();
   const userId = Number(body.userId);
@@ -67,4 +67,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json({ id: inserted.id, createdAt: inserted.createdAt });
 }
-
