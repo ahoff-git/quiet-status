@@ -1,6 +1,7 @@
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { join } from 'path';
 
 let db: ReturnType<typeof drizzle> | undefined;
 
@@ -13,7 +14,7 @@ export async function getDb() {
 
     const client = postgres(url, { max: 1 });
     db = drizzle(client);
-    await migrate(db, { migrationsFolder: './drizzle' });
+    await migrate(db, { migrationsFolder: join(process.cwd(), 'drizzle') });
   }
 
   return db;
