@@ -71,6 +71,7 @@
 
 .message {
   margin-top: 4px;
+  font-size: var(--post-font-size);
 }
 
 .input {

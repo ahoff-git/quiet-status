@@ -7,6 +7,7 @@ import AdminButton from "@/components/AdminButton";
 import styles from "./page.module.css";
 import DashboardClient from "@/components/DashboardClient";
 import { SelectedUserProvider } from "@/state/SelectedUserContext";
+import { FontSizeProvider } from "@/state/FontSizeContext";
 
 export const dynamic = "force-dynamic";
 
@@ -20,17 +21,19 @@ export default async function Dashboard() {
 
   return (
     <SelectedUserProvider>
-      <div className={styles.container}>
-        <div className={styles.topBar}>
-          <UserSelector users={userOptions} />
-          <div className={styles.topBarButtons}>
-            <button>Filters</button>
-            <AdminButton />
-            <SettingsButton />
+      <FontSizeProvider>
+        <div className={styles.container}>
+          <div className={styles.topBar}>
+            <UserSelector users={userOptions} />
+            <div className={styles.topBarButtons}>
+              <button>Filters</button>
+              <AdminButton />
+              <SettingsButton />
+            </div>
           </div>
+          <DashboardClient users={userOptions} />
         </div>
-        <DashboardClient users={userOptions} />
-      </div>
+      </FontSizeProvider>
     </SelectedUserProvider>
   );
 }

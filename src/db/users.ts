@@ -13,7 +13,9 @@ export async function createUser(displayName: string) {
       .returning({ id: users.id });
 
     const color = randomHexColor();
-    await tx.insert(userSettings).values({ userId: inserted.id, color });
+    await tx
+      .insert(userSettings)
+      .values({ userId: inserted.id, color, fontSize: 16 });
 
     return inserted;
   });

@@ -18,8 +18,8 @@ export async function POST(
 ) {
   const { userId: userIdParam } = await context.params;
   const userId = Number(userIdParam);
-  const { displayName, color } = await request.json();
-  await updateUserSettings(userId, displayName, color);
+  const { displayName, color, fontSize } = await request.json();
+  await updateUserSettings(userId, displayName, color, Number(fontSize));
   return NextResponse.json({ ok: true });
 }
 

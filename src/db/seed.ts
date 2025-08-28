@@ -17,7 +17,11 @@ export async function seedDefaultUsers(
 
     if (inserted.length > 0) {
       await db.insert(userSettings).values(
-        inserted.map(({ id }) => ({ userId: id, color: randomHexColor() }))
+        inserted.map(({ id }) => ({
+          userId: id,
+          color: randomHexColor(),
+          fontSize: 16,
+        }))
       );
     }
   }
