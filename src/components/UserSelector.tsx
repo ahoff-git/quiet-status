@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useSelectedUser } from "@/state/SelectedUserContext";
 import CreateUserModal from "./CreateUserModal";
 
 export type UserOption = {
@@ -12,10 +12,7 @@ export type UserOption = {
 const ADD_NEW_VALUE = "__add_new__";
 
 export default function UserSelector({ users }: { users: UserOption[] }) {
-  const [selectedUserId, setSelectedUserId] = useLocalStorage<string>(
-    "selectedUserId",
-    ""
-  );
+  const { selectedUserId, setSelectedUserId } = useSelectedUser();
   const [open, setOpen] = useState(false);
 
   return (

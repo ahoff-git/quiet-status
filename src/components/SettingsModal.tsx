@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Modal from "./Modal";
 import styles from "./SettingsModal.module.css";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useSelectedUser } from "@/state/SelectedUserContext";
 
 interface Props {
   userId: string;
@@ -14,7 +14,7 @@ interface Props {
 export default function SettingsModal({ userId, isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
   const [color, setColor] = useState("#000000");
-  const [, setSelectedUserId] = useLocalStorage<string>("selectedUserId", "");
+  const { setSelectedUserId } = useSelectedUser();
 
   useEffect(() => {
     if (!isOpen || !userId) return;

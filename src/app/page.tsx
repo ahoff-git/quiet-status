@@ -5,6 +5,7 @@ import UserSelector, { type UserOption } from "../components/UserSelector";
 import SettingsButton from "../components/SettingsButton";
 import styles from "./page.module.css";
 import DashboardClient from "@/components/DashboardClient";
+import { SelectedUserProvider } from "@/state/SelectedUserContext";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +18,17 @@ export default async function Dashboard() {
     .where(eq(users.isActive, true));
 
   return (
-    <div className={styles.container}>
-      <div className={styles.topBar}>
-        <UserSelector users={userOptions} />
-        <div className={styles.topBarButtons}>
-          <button>Filters</button>
-          <SettingsButton />
+    <SelectedUserProvider>
+      <div className={styles.container}>
+        <div className={styles.topBar}>
+          <UserSelector users={userOptions} />
+          <div className={styles.topBarButtons}>
+            <button>Filters</button>
+            <SettingsButton />
+          </div>
         </div>
+        <DashboardClient users={userOptions} />
       </div>
-      <DashboardClient users={userOptions} />
-    </div>
+    </SelectedUserProvider>
   );
 }

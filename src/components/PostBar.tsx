@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "@/app/page.module.css";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useSelectedUser } from "@/state/SelectedUserContext";
 import type { UserOption } from "./UserSelector";
 
 const PRESET_DURATIONS: { label: string; minutes: number }[] = [
@@ -15,7 +15,7 @@ const PRESET_DURATIONS: { label: string; minutes: number }[] = [
 ];
 
 export default function PostBar({ users, onPosted }: { users: UserOption[]; onPosted?: () => void }) {
-  const [selectedUserId] = useLocalStorage<string>("selectedUserId", "");
+  const { selectedUserId } = useSelectedUser();
   const posterId = useMemo(() => (selectedUserId ? Number(selectedUserId) : undefined), [selectedUserId]);
 
   const [message, setMessage] = useState("");
@@ -24,9 +24,21 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
   const [reachAll, setReachAll] = useState(true);
   const [reachSelected, setReachSelected] = useState<number[]>([]);
 
+  // Ensure the poster is always included when selecting specific users
+  useEffect(() => {
+    if (!posterId) return;
+    if (!reachAll) {
+      setReachSelected((prev) =>
+        prev.includes(posterId) ? prev : [...prev, posterId]
+      );
+    }
+  }, [posterId, reachAll]);
+
   const canPost = posterId && message.trim().length > 0;
 
   const toggleReach = (id: number) => {
+    // Do not allow unchecking your own name
+    if (posterId && id === posterId) return;
     setReachSelected((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
@@ -91,7 +103,8 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
                 <label key={u.id} className={styles.reachItem}>
                   <input
                     type="checkbox"
-                    checked={reachSelected.includes(u.id)}
+                    checked={u.id === posterId || reachSelected.includes(u.id)}
+                    disabled={u.id === posterId}
                     onChange={() => toggleReach(u.id)}
                   />
                   {u.displayName}
@@ -120,4 +133,3 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
     </div>
   );
 }
-

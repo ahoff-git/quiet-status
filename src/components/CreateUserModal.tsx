@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Modal from "./Modal";
 import styles from "./SettingsModal.module.css";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useSelectedUser } from "@/state/SelectedUserContext";
 
 interface Props {
   isOpen: boolean;
@@ -13,7 +13,7 @@ interface Props {
 export default function CreateUserModal({ isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
   const [color, setColor] = useState("#000000");
-  const [, setSelectedUserId] = useLocalStorage<string>("selectedUserId", "");
+  const { setSelectedUserId } = useSelectedUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,4 +62,3 @@ export default function CreateUserModal({ isOpen, onClose }: Props) {
     </Modal>
   );
 }
-

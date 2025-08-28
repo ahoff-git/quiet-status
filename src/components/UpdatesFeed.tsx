@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import HighlightedText from "./HighlightedText";
 import { KEY_TERMS } from "@/keyTerms";
 import styles from "@/app/page.module.css";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useSelectedUser } from "@/state/SelectedUserContext";
 
 type UpdateRow = {
   id: number;
@@ -15,7 +15,7 @@ type UpdateRow = {
 };
 
 export default function UpdatesFeed({ refreshToken = 0 }: { refreshToken?: number }) {
-  const [selectedUserId] = useLocalStorage<string>("selectedUserId", "");
+  const { selectedUserId } = useSelectedUser();
   const [rows, setRows] = useState<UpdateRow[]>([]);
 
   const viewerId = useMemo(() => (selectedUserId ? Number(selectedUserId) : undefined), [selectedUserId]);
@@ -49,4 +49,3 @@ export default function UpdatesFeed({ refreshToken = 0 }: { refreshToken?: numbe
     </ul>
   );
 }
-
