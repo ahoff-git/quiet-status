@@ -13,7 +13,10 @@ const SelectedUserContext = createContext<Ctx | undefined>(undefined);
 export function SelectedUserProvider({ children }: { children: React.ReactNode }) {
   const [selectedUserId, setSelectedUserId] = useLocalStorage<string>("selectedUserId", "");
 
-  const value = useMemo<Ctx>(() => ({ selectedUserId, setSelectedUserId }), [selectedUserId]);
+  const value = useMemo<Ctx>(
+    () => ({ selectedUserId, setSelectedUserId }),
+    [selectedUserId, setSelectedUserId]
+  );
 
   return (
     <SelectedUserContext.Provider value={value}>{children}</SelectedUserContext.Provider>
@@ -25,4 +28,3 @@ export function useSelectedUser() {
   if (!ctx) throw new Error("useSelectedUser must be used within SelectedUserProvider");
   return ctx;
 }
-
