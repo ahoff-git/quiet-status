@@ -1,8 +1,9 @@
-import { pgTable, serial, text, timestamp, integer } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, integer, boolean } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   displayName: text('display_name').notNull(),
+  isActive: boolean('is_active').notNull().default(true),
 });
 
 export const userSettings = pgTable('user_settings', {

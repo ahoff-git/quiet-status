@@ -1,50 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Modal from "./Modal";
 import styles from "./SettingsModal.module.css";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
 interface Props {
-  userId: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function SettingsModal({ userId, isOpen, onClose }: Props) {
+export default function CreateUserModal({ isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
   const [color, setColor] = useState("#000000");
   const [, setSelectedUserId] = useLocalStorage<string>("selectedUserId", "");
 
-  useEffect(() => {
-    if (!isOpen || !userId) return;
-    fetch(`/api/users/${userId}/settings`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.displayName) setDisplayName(data.displayName);
-        if (data?.color) setColor(data.color);
-      });
-  }, [isOpen, userId]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch(`/api/users/${userId}/settings`, {
+    const res = await fetch(`/api/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ displayName, color }),
     });
-    onClose();
-    window.location.reload();
-  };
-
-  const handleDelete = async () => {
-    if (!userId) return;
-    const confirmDelete = window.confirm(
-      "Are you sure you want to remove this user from the list?"
-    );
-    if (!confirmDelete) return;
-    await fetch(`/api/users/${userId}/settings`, { method: "DELETE" });
-    setSelectedUserId("");
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.id) {
+        setSelectedUserId(String(data.id));
+      }
+    }
     onClose();
     window.location.reload();
   };
@@ -53,32 +36,30 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
     <Modal isOpen={isOpen} onClose={onClose}>
       <form onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
-          <label htmlFor="displayName">Display Name</label>
+          <label htmlFor="new-displayName">Display Name</label>
           <input
-            id="displayName"
+            id="new-displayName"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
           />
         </div>
         <div className={styles.formGroup}>
-          <label htmlFor="color">Color</label>
+          <label htmlFor="new-color">Color</label>
           <input
-            id="color"
+            id="new-color"
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
           />
         </div>
         <div className={styles.actions}>
-          <button type="button" onClick={handleDelete}>
-            Delete User
-          </button>
           <button type="button" onClick={onClose}>
             Cancel
           </button>
-          <button type="submit">Save</button>
+          <button type="submit">Create</button>
         </div>
       </form>
     </Modal>
   );
 }
+

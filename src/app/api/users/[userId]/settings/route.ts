@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserSettings, updateUserSettings } from "@/db/userSettings";
+import { softDeleteUser } from "@/db/users";
 
 export async function GET(
   _request: Request,
@@ -17,5 +18,14 @@ export async function POST(
   const userId = Number(params.userId);
   const { displayName, color } = await request.json();
   await updateUserSettings(userId, displayName, color);
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: { userId: string } }
+) {
+  const userId = Number(params.userId);
+  await softDeleteUser(userId);
   return NextResponse.json({ ok: true });
 }

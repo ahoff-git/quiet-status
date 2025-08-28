@@ -8,6 +8,13 @@
       "when": 1756343009279,
       "tag": "0000_orange_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1756343009280,
+      "tag": "0001_soft_delete_users",
+      "breakpoints": true
     }
   ]
 }

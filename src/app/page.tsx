@@ -28,7 +28,8 @@ export default async function Dashboard() {
 
   const userOptions: UserOption[] = await db
     .select({ id: users.id, displayName: users.displayName })
-    .from(users);
+    .from(users)
+    .where(eq(users.isActive, true));
 
   return (
     <div className={styles.container}>

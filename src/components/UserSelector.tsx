@@ -1,29 +1,46 @@
 "use client";
 
+import { useState } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import CreateUserModal from "./CreateUserModal";
 
 export type UserOption = {
   id: number;
   displayName: string;
 };
 
+const ADD_NEW_VALUE = "__add_new__";
+
 export default function UserSelector({ users }: { users: UserOption[] }) {
   const [selectedUserId, setSelectedUserId] = useLocalStorage<string>(
     "selectedUserId",
     ""
   );
+  const [open, setOpen] = useState(false);
 
   return (
-    <select
-      value={selectedUserId}
-      onChange={(e) => setSelectedUserId(e.target.value)}
-    >
-      <option value="">Select user</option>
-      {users.map((user) => (
-        <option key={user.id} value={String(user.id)}>
-          {user.displayName}
-        </option>
-      ))}
-    </select>
+    <>
+      <select
+        value={selectedUserId}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (value === ADD_NEW_VALUE) {
+            // Open create user modal and keep previous selection
+            setOpen(true);
+            return;
+          }
+          setSelectedUserId(value);
+        }}
+      >
+        <option value="">Select user</option>
+        {users.map((user) => (
+          <option key={user.id} value={String(user.id)}>
+            {user.displayName}
+          </option>
+        ))}
+        <option value={ADD_NEW_VALUE}>+ Add new user…</option>
+      </select>
+      <CreateUserModal isOpen={open} onClose={() => setOpen(false)} />
+    </>
   );
 }
