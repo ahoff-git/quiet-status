@@ -4,6 +4,7 @@ import { desc, eq, gt } from "drizzle-orm";
 import UserSelector, { type UserOption } from "../components/UserSelector";
 import HighlightedText from "../components/HighlightedText";
 import { KEY_TERMS } from "../keyTerms";
+import SettingsButton from "../components/SettingsButton";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +36,7 @@ export default async function Dashboard() {
         <UserSelector users={userOptions} />
         <div className={styles.topBarButtons}>
           <button>Filters</button>
-          <button>Settings</button>
+          <SettingsButton />
         </div>
       </div>
       <ul className={styles.updates}>

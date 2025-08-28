@@ -1,0 +1,67 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Modal from "./Modal";
+import styles from "./SettingsModal.module.css";
+
+interface Props {
+  userId: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function SettingsModal({ userId, isOpen, onClose }: Props) {
+  const [displayName, setDisplayName] = useState("");
+  const [color, setColor] = useState("#000000");
+
+  useEffect(() => {
+    if (!isOpen || !userId) return;
+    fetch(`/api/users/${userId}/settings`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.displayName) setDisplayName(data.displayName);
+        if (data?.color) setColor(data.color);
+      });
+  }, [isOpen, userId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetch(`/api/users/${userId}/settings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ displayName, color }),
+    });
+    onClose();
+    window.location.reload();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      <form onSubmit={handleSubmit}>
+        <div className={styles.formGroup}>
+          <label htmlFor="displayName">Display Name</label>
+          <input
+            id="displayName"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor="color">Color</label>
+          <input
+            id="color"
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          />
+        </div>
+        <div className={styles.actions}>
+          <button type="button" onClick={onClose}>
+            Cancel
+          </button>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
