@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import { updates, users, userSettings } from "../db/schema";
 import { desc, eq, gt } from "drizzle-orm";
+import UserSelector, { type UserOption } from "../components/UserSelector";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -22,11 +23,18 @@ export default async function Dashboard() {
     .where(gt(updates.createdAt, since))
     .orderBy(desc(updates.createdAt));
 
+  const userOptions: UserOption[] = await db
+    .select({ id: users.id, displayName: users.displayName })
+    .from(users);
+
   return (
     <div className={styles.container}>
       <div className={styles.topBar}>
-        <button>Filters</button>
-        <button>Settings</button>
+        <UserSelector users={userOptions} />
+        <div className={styles.topBarButtons}>
+          <button>Filters</button>
+          <button>Settings</button>
+        </div>
       </div>
       <ul className={styles.updates}>
         {rows.map((row) => (
