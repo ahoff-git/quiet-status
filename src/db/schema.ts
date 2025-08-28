@@ -17,6 +17,10 @@ export const updates = pgTable('updates', {
   userId: integer('user_id').references(() => users.id).notNull(),
   message: text('message').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
+  // List of user IDs allowed to view this update. Null means visible to everyone.
+  reach: integer('reach').array(),
+  // When set, the update is considered invalid/expired after this timestamp
+  expiresAt: timestamp('expires_at'),
 });
 
 export const userStats = pgTable('user_stats', {
