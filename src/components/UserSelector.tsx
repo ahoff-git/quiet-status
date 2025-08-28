@@ -19,14 +19,39 @@ export default function UserSelector({ users }: { users: UserOption[] }) {
     <>
       <select
         value={selectedUserId}
-        onChange={(e) => {
+        onChange={async (e) => {
           const value = e.target.value;
           if (value === ADD_NEW_VALUE) {
             // Open create user modal and keep previous selection
             setOpen(true);
             return;
           }
-          setSelectedUserId(value);
+          if (!value) {
+            setSelectedUserId("");
+            return;
+          }
+          // Check if user has a password; if so, prompt + verify before setting
+          try {
+            const res = await fetch(`/api/users/${value}/settings`);
+            const data = await res.json();
+            if (data?.hasPassword) {
+              const pwd = window.prompt("Enter password for this account:");
+              if (pwd === null) return; // user cancelled, keep previous selection
+              const auth = await fetch(`/api/users/${value}/auth`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password: pwd }),
+              });
+              if (!auth.ok) {
+                window.alert("Incorrect password");
+                return;
+              }
+            }
+            setSelectedUserId(value);
+          } catch (err) {
+            console.error(err);
+            window.alert("Unable to switch user");
+          }
         }}
       >
         <option value="">Select user</option>

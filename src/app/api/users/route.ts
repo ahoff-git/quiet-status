@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser } from "@/db/users";
+import { createUser, listUsersWithPasswordFlag } from "@/db/users";
 
 export async function POST(request: NextRequest) {
   const { displayName } = await request.json();
@@ -12,4 +12,9 @@ export async function POST(request: NextRequest) {
 
   const { id } = await createUser(displayName);
   return NextResponse.json({ id });
+}
+
+export async function GET() {
+  const users = await listUsersWithPasswordFlag();
+  return NextResponse.json(users);
 }

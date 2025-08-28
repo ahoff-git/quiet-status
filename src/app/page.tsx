@@ -3,6 +3,7 @@ import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import UserSelector, { type UserOption } from "../components/UserSelector";
 import SettingsButton from "../components/SettingsButton";
+import AdminButton from "@/components/AdminButton";
 import styles from "./page.module.css";
 import DashboardClient from "@/components/DashboardClient";
 import { SelectedUserProvider } from "@/state/SelectedUserContext";
@@ -24,6 +25,7 @@ export default async function Dashboard() {
           <UserSelector users={userOptions} />
           <div className={styles.topBarButtons}>
             <button>Filters</button>
+            <AdminButton />
             <SettingsButton />
           </div>
         </div>

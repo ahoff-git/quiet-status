@@ -14,6 +14,7 @@ export async function getDb() {
 
     const client = postgres(url, { max: 1 });
     db = drizzle(client);
+    // Run migrations once on first connect
     await migrate(db, { migrationsFolder: './drizzle' });
     await seedDefaultUsers(db);
   }

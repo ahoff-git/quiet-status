@@ -4,12 +4,32 @@ import { users, userSettings } from "./schema";
 
 export async function getUserSettings(userId: number) {
   const db = await getDb();
-  const [row] = await db
-    .select({ displayName: users.displayName, color: userSettings.color })
-    .from(users)
-    .leftJoin(userSettings, eq(users.id, userSettings.userId))
-    .where(eq(users.id, userId));
-  return row;
+  try {
+    const [row] = await db
+      .select({ displayName: users.displayName, color: userSettings.color, passwordHash: users.passwordHash })
+      .from(users)
+      .leftJoin(userSettings, eq(users.id, userSettings.userId))
+      .where(eq(users.id, userId));
+    if (!row) return undefined;
+    const { displayName, color, passwordHash } = row as { displayName: string; color: string | null; passwordHash: string | null };
+    return { displayName, color, hasPassword: !!(passwordHash && passwordHash.length > 0) } as const;
+  } catch (err: unknown) {
+    // Gracefully handle environments where the password column hasn't been migrated yet
+    type PgLikeError = { code?: unknown; cause?: { code?: unknown } };
+    const anyErr = err as PgLikeError;
+    const code = anyErr?.code ?? anyErr?.cause?.code;
+    if (code === '42703') {
+      const [row] = await db
+        .select({ displayName: users.displayName, color: userSettings.color })
+        .from(users)
+        .leftJoin(userSettings, eq(users.id, userSettings.userId))
+        .where(eq(users.id, userId));
+      if (!row) return undefined;
+      const { displayName, color } = row as { displayName: string; color: string | null };
+      return { displayName, color, hasPassword: false } as const;
+    }
+    throw err;
+  }
 }
 
 export async function updateUserSettings(

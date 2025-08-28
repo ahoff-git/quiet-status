@@ -166,10 +166,9 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
                 if (!el) return;
                 try {
                   // Prefer showPicker when available
-                  // @ts-expect-error: showPicker not in TS lib yet in all versions
-                  if (typeof el.showPicker === "function") {
-                    // @ts-expect-error
-                    el.showPicker();
+                  const picker = el as HTMLInputElement & { showPicker?: () => void };
+                  if (typeof picker.showPicker === "function") {
+                    picker.showPicker();
                   } else {
                     el.focus();
                     el.click();

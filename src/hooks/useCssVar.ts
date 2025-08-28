@@ -20,21 +20,24 @@ export function useCssVar(varName: string): string {
     read();
 
     // Update on theme changes (prefers-color-scheme) since our vars depend on it
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    type MqlLegacy = MediaQueryList & {
+      addListener?: (this: MediaQueryList, listener: (this: MediaQueryList, ev: MediaQueryListEvent) => void) => void;
+      removeListener?: (this: MediaQueryList, listener: (this: MediaQueryList, ev: MediaQueryListEvent) => void) => void;
+    };
+    const mql = window.matchMedia("(prefers-color-scheme: dark)") as MqlLegacy;
     const onChange = () => read();
     if (mql.addEventListener) mql.addEventListener("change", onChange);
-    else if ((mql as any).addListener) (mql as any).addListener(onChange);
+    else if (mql.addListener) mql.addListener(onChange as unknown as (this: MediaQueryList, ev: MediaQueryListEvent) => void);
 
     // Fallback timer in case vars change through other means
     const interval = window.setInterval(read, 2000);
 
     return () => {
       if (mql.removeEventListener) mql.removeEventListener("change", onChange);
-      else if ((mql as any).removeListener) (mql as any).removeListener(onChange);
+      else if (mql.removeListener) mql.removeListener(onChange as unknown as (this: MediaQueryList, ev: MediaQueryListEvent) => void);
       window.clearInterval(interval);
     };
   }, [varName]);
 
   return value;
 }
-

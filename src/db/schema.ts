@@ -4,6 +4,8 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   displayName: text('display_name').notNull(),
   isActive: boolean('is_active').notNull().default(true),
+  // Nullable text field storing a password hash (scrypt). Null/empty => no password
+  passwordHash: text('password_hash'),
 });
 
 export const userSettings = pgTable('user_settings', {

@@ -15,7 +15,9 @@ interface Props {
 export default function SettingsModal({ userId, isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
   const [color, setColor] = useState("#000000");
-  const { setSelectedUserId } = useSelectedUser();
+  const { setSelectedUserId, selectedUserId } = useSelectedUser();
+  const [hasPassword, setHasPassword] = useState<boolean>(false);
+  const [newPassword, setNewPassword] = useState<string>("");
 
   useEffect(() => {
     if (!isOpen || !userId) return;
@@ -24,6 +26,7 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
       .then((data) => {
         if (data?.displayName) setDisplayName(data.displayName);
         if (data?.color) setColor(data.color);
+        if (typeof data?.hasPassword === "boolean") setHasPassword(Boolean(data.hasPassword));
       });
   }, [isOpen, userId]);
 
@@ -34,6 +37,39 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ displayName, color }),
     });
+    onClose();
+    window.location.reload();
+  };
+
+  const handleSetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) return;
+    await fetch(`/api/users/${userId}/password`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-Id": String(selectedUserId || ""),
+      },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    setNewPassword("");
+    setHasPassword(true);
+    onClose();
+    window.location.reload();
+  };
+
+  const handleClearPassword = async () => {
+    const canClear = selectedUserId === userId || selectedUserId === "1";
+    if (!canClear) return;
+    const confirmClear = window.confirm("Remove password for this account?");
+    if (!confirmClear) return;
+    await fetch(`/api/users/${userId}/password`, {
+      method: "DELETE",
+      headers: {
+        "X-User-Id": String(selectedUserId || ""),
+      },
+    });
+    setHasPassword(false);
     onClose();
     window.location.reload();
   };
@@ -81,6 +117,30 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
             <button type="button" onClick={() => setColor(randomHexColor())}>
               Randomize
             </button>
+          </div>
+        </div>
+        <div className={styles.formGroup}>
+          <label htmlFor="password">Password</label>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              id="password"
+              type="password"
+              placeholder={hasPassword ? "Set new password" : "Set password"}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              style={{ flex: 1 }}
+            />
+            <button type="button" onClick={handleSetPassword} disabled={!newPassword}>
+              {hasPassword ? "Update" : "Set"}
+            </button>
+            {(selectedUserId === userId || selectedUserId === "1") && hasPassword && (
+              <button type="button" onClick={handleClearPassword}>
+                Clear Password
+              </button>
+            )}
+          </div>
+          <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>
+            {hasPassword ? "Password is set" : "No password set"}
           </div>
         </div>
         <div className={styles.actions}>
