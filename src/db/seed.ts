@@ -1,5 +1,6 @@
 import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { users } from "./schema";
+import { users, userSettings } from "./schema";
+import { randomHexColor } from "@/utils/color";
 
 const DEFAULT_USERS = ["Monica", "Adam", "Grammy", "Papa"];
 
@@ -9,8 +10,15 @@ export async function seedDefaultUsers(
 ) {
   const existing = await db.select({ id: users.id }).from(users).limit(1);
   if (existing.length === 0) {
-    await db
+    const inserted = await db
       .insert(users)
-      .values(DEFAULT_USERS.map((displayName) => ({ displayName })));
+      .values(DEFAULT_USERS.map((displayName) => ({ displayName })))
+      .returning({ id: users.id });
+
+    if (inserted.length > 0) {
+      await db.insert(userSettings).values(
+        inserted.map(({ id }) => ({ userId: id, color: randomHexColor() }))
+      );
+    }
   }
 }

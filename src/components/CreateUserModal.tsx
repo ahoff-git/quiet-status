@@ -12,7 +12,6 @@ interface Props {
 
 export default function CreateUserModal({ isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
-  const [color, setColor] = useState("#000000");
   const { setSelectedUserId } = useSelectedUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +19,7 @@ export default function CreateUserModal({ isOpen, onClose }: Props) {
     const res = await fetch(`/api/users`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ displayName, color }),
+      body: JSON.stringify({ displayName }),
     });
     if (res.ok) {
       const data = await res.json();
@@ -43,15 +42,7 @@ export default function CreateUserModal({ isOpen, onClose }: Props) {
             onChange={(e) => setDisplayName(e.target.value)}
           />
         </div>
-        <div className={styles.formGroup}>
-          <label htmlFor="new-color">Color</label>
-          <input
-            id="new-color"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
-        </div>
+        {/* Color is assigned randomly on creation */}
         <div className={styles.actions}>
           <button type="button" onClick={onClose}>
             Cancel

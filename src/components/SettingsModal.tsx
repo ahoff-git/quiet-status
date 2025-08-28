@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Modal from "./Modal";
 import styles from "./SettingsModal.module.css";
 import { useSelectedUser } from "@/state/SelectedUserContext";
+import { randomHexColor } from "@/utils/color";
 
 interface Props {
   userId: string;
@@ -62,12 +63,25 @@ export default function SettingsModal({ userId, isOpen, onClose }: Props) {
         </div>
         <div className={styles.formGroup}>
           <label htmlFor="color">Color</label>
-          <input
-            id="color"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              id="color"
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              style={{ width: 48, height: 32, padding: 0, border: 0, background: "none" }}
+            />
+            <input
+              type="text"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              aria-label="Color hex"
+              style={{ flex: 1 }}
+            />
+            <button type="button" onClick={() => setColor(randomHexColor())}>
+              Randomize
+            </button>
+          </div>
         </div>
         <div className={styles.actions}>
           <button type="button" onClick={handleDelete}>

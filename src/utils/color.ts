@@ -47,3 +47,7 @@ export function isLowContrast(hex1: string, hex2: string, threshold = 4.5): bool
   return ratio < threshold;
 }
 
+export function randomHexColor(): string {
+  const n = Math.floor(Math.random() * 0xffffff);
+  return `#${n.toString(16).padStart(6, "0")}`;
+}
