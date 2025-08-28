@@ -6,7 +6,7 @@ import styles from "./page.module.css";
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
-  const db = getDb();
+  const db = await getDb();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const rows = await db
     .select({
