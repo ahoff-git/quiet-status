@@ -1,6 +1,32 @@
-import { pgTable, serial, text } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, integer } from 'drizzle-orm/pg-core';
 
-export const statuses = pgTable('statuses', {
+export const users = pgTable('users', {
   id: serial('id').primaryKey(),
+  displayName: text('display_name').notNull(),
+});
+
+export const userSettings = pgTable('user_settings', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  color: text('color').notNull(),
+});
+
+export const updates = pgTable('updates', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
   message: text('message').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+export const userStats = pgTable('user_stats', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  lastActive: timestamp('last_active'),
+  updateCount: integer('update_count').notNull().default(0),
+});
+
+export const userActiveFilterSettings = pgTable('user_active_filter_settings', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  filter: text('filter').notNull(),
 });
