@@ -1,9 +1,9 @@
 import { defineConfig } from 'drizzle-kit';
 
-const url = process.env.DATABASE_URL;
+const url = process.env.POSTGRES_URL;
 
 if (!url) {
-  throw new Error('DATABASE_URL is not set');
+  throw new Error('POSTGRES_URL is not set');
 }
 
 export default defineConfig({
