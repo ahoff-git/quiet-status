@@ -39,25 +39,24 @@ export async function getUserSettings(userId: number) {
     const anyErr = err as PgLikeError;
     const code = anyErr?.code ?? anyErr?.cause?.code;
     if (code === '42703') {
+      // Retry with only columns that are guaranteed to exist pre-migration.
       const [row] = await db
         .select({
           displayName: users.displayName,
           color: userSettings.color,
-          fontSize: userSettings.fontSize,
         })
         .from(users)
         .leftJoin(userSettings, eq(users.id, userSettings.userId))
         .where(eq(users.id, userId));
       if (!row) return undefined;
-      const { displayName, color, fontSize } = row as {
+      const { displayName, color } = row as {
         displayName: string;
         color: string | null;
-        fontSize: number | null;
       };
       return {
         displayName,
         color,
-        fontSize: fontSize ?? 16,
+        fontSize: 16,
         hasPassword: false,
       } as const;
     }
