@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import HighlightedText from "./HighlightedText";
 import { KEY_TERMS } from "@/keyTerms";
 import styles from "@/app/page.module.css";
 import { useSelectedUser } from "@/state/SelectedUserContext";
 import { useCssVar } from "@/hooks/useCssVar";
+import { usePolling } from "@/hooks/usePolling";
 import { isLowContrast, contrastRatio } from "@/utils/color";
 
 type UpdateRow = {
@@ -17,24 +23,33 @@ type UpdateRow = {
   color: string | null;
 };
 
-export default function UpdatesFeed({ refreshToken = 0 }: { refreshToken?: number }) {
+export default function UpdatesFeed({
+  refreshToken = 0,
+  pollInterval = 30000,
+}: {
+  refreshToken?: number;
+  pollInterval?: number;
+}) {
   const { selectedUserId } = useSelectedUser();
   const [rows, setRows] = useState<UpdateRow[]>([]);
 
-  const viewerId = useMemo(() => (selectedUserId ? Number(selectedUserId) : undefined), [selectedUserId]);
+  const viewerId = useMemo(
+    () => (selectedUserId ? Number(selectedUserId) : undefined),
+    [selectedUserId]
+  );
   const background = useCssVar("--background");
   const foreground = useCssVar("--foreground");
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const fetchUpdates = useCallback(() => {
     const url = new URL("/api/updates", window.location.origin);
     if (viewerId) url.searchParams.set("viewerId", String(viewerId));
-    fetch(url.toString(), { signal: controller.signal })
+    fetch(url.toString())
       .then((r) => r.json())
       .then((data: UpdateRow[]) => setRows(data))
       .catch(() => {});
-    return () => controller.abort();
-  }, [viewerId, refreshToken]);
+  }, [viewerId]);
+
+  usePolling(fetchUpdates, pollInterval, [refreshToken]);
 
   return (
     <ul className={styles.updates}>
