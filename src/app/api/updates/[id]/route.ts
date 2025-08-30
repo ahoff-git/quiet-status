@@ -122,9 +122,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Invalid id" }, { status: 400 });
   }
 
-  let body: any = {};
+  type DeleteBody = { userId?: unknown };
+  let body: DeleteBody = {};
   try {
-    body = await request.json();
+    body = (await request.json()) as DeleteBody;
   } catch {}
   const userId = Number(body.userId);
   if (!Number.isFinite(userId)) {
