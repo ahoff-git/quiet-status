@@ -55,7 +55,9 @@ export default function UpdatesFeed({
   usePolling(fetchUpdates, pollInterval, [refreshToken]);
 
   const terms = useMemo<HighlightTerm[]>(() => {
-    const userTerms = users.map((u) => ({ term: u.displayName, color: u.color }));
+    const userTerms = users.flatMap((u) =>
+      u.color ? [{ term: u.displayName, color: u.color }] : []
+    );
     return [...KEY_TERMS, ...userTerms];
   }, [users]);
 
