@@ -194,6 +194,38 @@ export default function PostBar({ users, onPosted }: { users: UserOption[]; onPo
             >
               Today
             </button>
+            <button
+              type="button"
+              className={styles.postOptionsButton}
+              onClick={() => setExpiresAtLocal(formatForDateTimeLocal(new Date(Date.now() + 5 * 60 * 1000)))}
+              title="Set to 5 minutes from now"
+            >
+              5m
+            </button>
+            <button
+              type="button"
+              className={styles.postOptionsButton}
+              onClick={() => setExpiresAtLocal(formatForDateTimeLocal(new Date(Date.now() + 30 * 60 * 1000)))}
+              title="Set to 30 minutes from now"
+            >
+              30m
+            </button>
+            <button
+              type="button"
+              className={styles.postOptionsButton}
+              onClick={() => setExpiresAtLocal(formatForDateTimeLocal(new Date(Date.now() + 60 * 60 * 1000)))}
+              title="Set to 1 hour from now"
+            >
+              1h
+            </button>
+            <button
+              type="button"
+              className={styles.postOptionsButton}
+              onClick={() => setExpiresAtLocal(formatForDateTimeLocal(new Date(Date.now() + 90 * 60 * 1000)))}
+              title="Set to 90 minutes from now"
+            >
+              90m
+            </button>
             <input
               ref={dateInputRef}
               type="datetime-local"
