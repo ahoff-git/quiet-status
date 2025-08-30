@@ -141,3 +141,17 @@
   align-items: center;
   gap: 6px;
 }
+
+
+/* Tiny inline actions for timestamps */
+.inlineAction {
+  border: none;
+  background: transparent;
+  color: gray;
+  font-size: 0.8em;
+  padding: 0;
+  margin: 0 2px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+

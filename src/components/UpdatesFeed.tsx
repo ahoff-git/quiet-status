@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useCallback,
@@ -17,6 +17,7 @@ import { isLowContrast, contrastRatio } from "@/utils/color";
 
 type UpdateRow = {
   id: number;
+  userId: number;
   message: string;
   createdAt: string;
   expiresAt: string | null;
@@ -35,6 +36,71 @@ export default function UpdatesFeed({
 }) {
   const { selectedUserId } = useSelectedUser();
   const [rows, setRows] = useState<UpdateRow[]>([]);
+  // Editing state
+  const [editing, setEditing] = useState<{
+    id: number;
+    message: string;
+    expiresAtLocal: string;
+    reachAll: boolean;
+    reachSelected: number[];
+    optionsOpen: boolean;
+    ownerId?: number;
+  } | null>(null);
+
+  function formatForDateTimeLocal(d: Date) {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const year = d.getFullYear();
+    const month = pad(d.getMonth() + 1);
+    const day = pad(d.getDate());
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  }
+
+  const beginEdit = async (row: UpdateRow) => {
+    if (!viewerId) return;
+    try {
+      const res = await fetch(`/api/updates/${row.id}?viewerId=${viewerId}`);
+      if (!res.ok) return;
+      const detail: { message: string; expiresAt: string | null; reach: number[] | null; userId: number } = await res.json();
+      const expiresAtLocal = detail.expiresAt ? formatForDateTimeLocal(new Date(detail.expiresAt)) : formatForDateTimeLocal(new Date());
+      const reachAll = !detail.reach || detail.reach.length === 0;
+      const ownerId = row.userId;
+      const reachSelected = reachAll ? [ownerId] : Array.from(new Set([ownerId, ...detail.reach!]));
+      setEditing({ id: row.id, message: detail.message, expiresAtLocal, reachAll, reachSelected, optionsOpen: false, ownerId });
+    } catch {}
+  };
+
+  const saveEdit = async () => {
+    if (!editing || !viewerId) return;
+    const { id, message, expiresAtLocal, reachAll, reachSelected } = editing;
+    let expiresAtIso: string | null = null;
+    if (expiresAtLocal) {
+      const parsed = new Date(expiresAtLocal);
+      if (!Number.isNaN(parsed.getTime())) expiresAtIso = parsed.toISOString();
+    }
+    const body = {
+      userId: viewerId,
+      message: message.trim(),
+      expiresAt: expiresAtIso,
+      reachUserIds: reachAll ? null : reachSelected,
+    };
+    const res = await fetch(`/api/updates/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (res.ok) {
+      setEditing(null);
+      fetchUpdates();
+    }
+  };
+
+  const deleteUpdate = async (row: UpdateRow) => {
+    if (!viewerId) return;
+    if (!confirm('Delete this post?')) return;
+    const res = await fetch(`/api/updates/${row.id}`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: viewerId }) });
+    if (res.ok) {
+      if (editing && editing.id === row.id) setEditing(null);
+      fetchUpdates();
+    }
+  };
 
   const viewerId = useMemo(
     () => (selectedUserId ? Number(selectedUserId) : undefined),
@@ -62,6 +128,7 @@ export default function UpdatesFeed({
   }, [users]);
 
   return (
+    <>
     <ul className={styles.updates}>
       {rows.map((row) => (
         <li key={row.id} className={styles.updateItem}>
@@ -114,7 +181,15 @@ export default function UpdatesFeed({
               return (
                 <span className={styles.time}>
                   {created.toLocaleString()}
-                  {est ? ` • ${est}` : ""}
+                  {est ? ` | ${est}` : ""}
+                  {(viewerId === row.userId || viewerId === 1) && (
+                    <>
+                      {" | "}
+                      <button className={styles.inlineAction} onClick={() => beginEdit(row)} title="Edit">&#9998;</button>
+                      {" | "}
+                      <button className={styles.inlineAction} onClick={() => deleteUpdate(row)} title="Delete">&#10006;</button>
+                    </>
+                  )}
                 </span>
               );
             })()}
@@ -125,5 +200,64 @@ export default function UpdatesFeed({
         </li>
       ))}
     </ul>
+      {editing && (
+        <div style={{ position: "fixed", left: 0, right: 0, bottom: 60, padding: 12, background: "var(--background)", borderTop: "1px solid #eaeaea" }}>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              className={styles.input}
+              placeholder="Edit message..."
+              value={editing.message}
+              onChange={(e) => setEditing({ ...editing, message: e.target.value })}
+            />
+            <button className={styles.postOptionsButton} onClick={() => setEditing({ ...editing, optionsOpen: !editing.optionsOpen })}>
+              Options
+            </button>
+            <button className={styles.postButton} disabled={!editing.message.trim()} onClick={saveEdit}>Save</button>
+            <button className={styles.postOptionsButton} onClick={() => setEditing(null)}>Cancel</button>
+          </div>
+          {editing.optionsOpen && (
+            <div className={styles.postOptionsPanel} style={{ bottom: 120 }}>
+              <div className={styles.optionRow}>
+                <label className={styles.optionLabel}>Reach:</label>
+                <div className={styles.reachChoices}>
+                  <label>
+                    <input type="radio" name="reach" checked={editing.reachAll} onChange={() => setEditing({ ...editing, reachAll: true })} />
+                    Everyone
+                  </label>
+                  <label>
+                    <input type="radio" name="reach" checked={!editing.reachAll} onChange={() => setEditing({ ...editing, reachAll: false })} />
+                    Selected
+                  </label>
+                </div>
+              </div>
+              {!editing.reachAll && (
+                <div className={styles.reachList}>
+                  {users.map((u) => (
+                    <label key={u.id} className={styles.reachItem}>
+                      <input
+                        type="checkbox"
+                        checked={editing.reachSelected.includes(u.id)}
+                        disabled={u.id === editing.ownerId}
+                        onChange={() => {
+                          if (u.id === editing.ownerId) return;
+                          const included = editing.reachSelected.includes(u.id);
+                          const next = included ? editing.reachSelected.filter((x) => x !== u.id) : [...editing.reachSelected, u.id];
+                          setEditing({ ...editing, reachSelected: next });
+                        }}
+                      />
+                      {u.displayName}
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className={styles.optionRow}>
+                <label className={styles.optionLabel}>Est. end time:</label>
+                <input type="datetime-local" value={editing.expiresAtLocal} min={formatForDateTimeLocal(new Date())} onChange={(e) => setEditing({ ...editing, expiresAtLocal: e.target.value })} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </>
   );
 }

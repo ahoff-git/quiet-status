@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
 
   const rows = await db
     .select({
+      userId: updates.userId,
       id: updates.id,
       message: updates.message,
       createdAt: updates.createdAt,
