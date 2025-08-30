@@ -1,4 +1,5 @@
 import styles from "./HighlightedText.module.css";
+import type { HighlightTerm } from "@/keyTerms";
 
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -9,24 +10,31 @@ export default function HighlightedText({
   terms,
 }: {
   text: string;
-  terms: string[];
+  terms: HighlightTerm[];
 }) {
   if (terms.length === 0) return text;
 
-  const regex = new RegExp(`(${terms.map(escapeRegExp).join("|")})`, "gi");
+  const regex = new RegExp(`(${terms.map((t) => escapeRegExp(t.term)).join("|")})`, "gi");
   const parts = text.split(regex);
 
   return (
     <>
-      {parts.map((part, i) =>
-        terms.some((term) => term.toLowerCase() === part.toLowerCase()) ? (
-          <span key={i} className={styles.highlight}>
+      {parts.map((part, i) => {
+        const match = terms.find(
+          (term) => term.term.toLowerCase() === part.toLowerCase()
+        );
+        return match ? (
+          <span
+            key={i}
+            className={styles.highlight}
+            style={{ color: match.color }}
+          >
             {part}
           </span>
         ) : (
           part
-        )
-      )}
+        );
+      })}
     </>
   );
 }

@@ -7,6 +7,7 @@ import CreateUserModal from "./CreateUserModal";
 export type UserOption = {
   id: number;
   displayName: string;
+  color: string;
 };
 
 const ADD_NEW_VALUE = "__add_new__";

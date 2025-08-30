@@ -7,7 +7,8 @@ import {
   type CSSProperties,
 } from "react";
 import HighlightedText from "./HighlightedText";
-import { KEY_TERMS } from "@/keyTerms";
+import { KEY_TERMS, type HighlightTerm } from "@/keyTerms";
+import type { UserOption } from "./UserSelector";
 import styles from "@/app/page.module.css";
 import { useSelectedUser } from "@/state/SelectedUserContext";
 import { useCssVar } from "@/hooks/useCssVar";
@@ -26,9 +27,11 @@ type UpdateRow = {
 export default function UpdatesFeed({
   refreshToken = 0,
   pollInterval = 30000,
+  users = [],
 }: {
   refreshToken?: number;
   pollInterval?: number;
+  users?: UserOption[];
 }) {
   const { selectedUserId } = useSelectedUser();
   const [rows, setRows] = useState<UpdateRow[]>([]);
@@ -50,6 +53,11 @@ export default function UpdatesFeed({
   }, [viewerId]);
 
   usePolling(fetchUpdates, pollInterval, [refreshToken]);
+
+  const terms = useMemo<HighlightTerm[]>(() => {
+    const userTerms = users.map((u) => ({ term: u.displayName, color: u.color }));
+    return [...KEY_TERMS, ...userTerms];
+  }, [users]);
 
   return (
     <ul className={styles.updates}>
@@ -110,7 +118,7 @@ export default function UpdatesFeed({
             })()}
           </div>
           <p className={styles.message}>
-            <HighlightedText text={row.message} terms={KEY_TERMS} />
+            <HighlightedText text={row.message} terms={terms} />
           </p>
         </li>
       ))}

@@ -10,7 +10,7 @@ export default function DashboardClient({ users }: { users: UserOption[] }) {
 
   return (
     <>
-      <UpdatesFeed refreshToken={refreshToken} />
+      <UpdatesFeed refreshToken={refreshToken} users={users} />
       <PostBar users={users} onPosted={() => setRefreshToken((x) => x + 1)} />
     </>
   );

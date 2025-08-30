@@ -1,5 +1,5 @@
 import { getDb } from "../db";
-import { users } from "../db/schema";
+import { users, userSettings } from "../db/schema";
 import { eq } from "drizzle-orm";
 import UserSelector, { type UserOption } from "../components/UserSelector";
 import SettingsButton from "../components/SettingsButton";
@@ -15,8 +15,9 @@ export default async function Dashboard() {
   const db = await getDb();
 
   const userOptions: UserOption[] = await db
-    .select({ id: users.id, displayName: users.displayName })
+    .select({ id: users.id, displayName: users.displayName, color: userSettings.color })
     .from(users)
+    .leftJoin(userSettings, eq(users.id, userSettings.userId))
     .where(eq(users.isActive, true));
 
   return (
