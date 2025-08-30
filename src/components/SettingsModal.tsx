@@ -15,7 +15,7 @@ interface Props {
 
 export default function SettingsModal({ userId, isOpen, onClose }: Props) {
   const [displayName, setDisplayName] = useState("");
-  const [color, setColor] = useState("#000000");
+  const [color, setColor] = useState(() => randomHexColor());
   const { fontSize: currentFontSize, setFontSize: setContextFontSize } = useFontSize();
   const [fontSize, setFontSize] = useState<number>(currentFontSize);
   const { setSelectedUserId, selectedUserId } = useSelectedUser();
