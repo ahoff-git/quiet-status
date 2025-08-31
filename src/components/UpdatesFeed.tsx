@@ -122,7 +122,7 @@ export default function UpdatesFeed({
 
   const terms = useMemo<HighlightTerm[]>(() => {
     const userTerms = users.flatMap((u) =>
-      u.color ? [{ term: u.displayName, color: u.color }] : []
+      u.color ? [{ terms: [u.displayName], color: u.color }] : []
     );
     return [...KEY_TERMS, ...userTerms];
   }, [users]);

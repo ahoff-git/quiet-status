@@ -1,4 +1,5 @@
 import styles from "./HighlightedText.module.css";
+import { useMemo } from "react";
 import type { HighlightTerm } from "@/keyTerms";
 
 function escapeRegExp(str: string) {
@@ -12,16 +13,22 @@ export default function HighlightedText({
   text: string;
   terms: HighlightTerm[];
 }) {
-  if (terms.length === 0) return text;
+  const regex = useMemo(() => {
+    if (terms.length === 0) return null;
+    const all = terms.flatMap((t) => t.terms);
+    all.sort((a, b) => b.length - a.length);
+    return new RegExp(`\\b(${all.map((term) => escapeRegExp(term)).join("|")})\\b`, "gi");
+  }, [terms]);
 
-  const regex = new RegExp(`(${terms.map((t) => escapeRegExp(t.term)).join("|")})`, "gi");
+  if (!regex) return text;
+
   const parts = text.split(regex);
 
   return (
     <>
       {parts.map((part, i) => {
-        const match = terms.find(
-          (term) => term.term.toLowerCase() === part.toLowerCase()
+        const match = terms.find((term) =>
+          term.terms.some((t) => t.toLowerCase() === part.toLowerCase())
         );
         return match ? (
           <span
